@@ -3,6 +3,7 @@
 #Análisis y procesamiento de imágenes: Proyecto4 Entrega1
 ##Se importan librerías que se utilizarán para el desarrollo del laboratorio
 import os
+import glob
 import numpy as np
 from skimage import io
 from skimage import color
@@ -24,11 +25,11 @@ def train(parameters, action):
     if action == 'save':
         descriptors = calculate_descriptors(images_train, parameters)
         # TODO Guardar matriz de descriptores con el nombre parameters['train_descriptor_name']
-        
+        np.save(parameters['train_descriptor_name'], descriptors)
     else:
         # Esta condición solo la tendrán que utilizar para la tercera entrega.
         # TODO Cargar matrices de parameters['train_descriptor_name']
-    
+        carga = np.load(parameters['train_descriptor_name'])
     # TODO Definir una semilla y utilice la misma para todos los experimentos de la entrega.
     # TODO Inicializar y entrenar el modelo con los descriptores.
     # TODO Guardar modelo con el nombre del experimento: parameters['name_model']
