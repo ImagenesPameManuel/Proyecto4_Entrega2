@@ -32,8 +32,10 @@ def train(parameters, action):
         # TODO Cargar matrices de parameters['train_descriptor_name']
         descriptors = np.load(parameters['train_descriptor_name'])
     # TODO Definir una semilla y utilice la misma para todos los experimentos de la entrega.
-    entrenamiento = sk.cluster.k_means(descriptors, parameters['k'], random_state=0)
+    semilla = 0
     # TODO Inicializar y entrenar el modelo con los descriptores.
+    entrenamiento = sk.cluster.KMeans(parameters['k'], random_state=semilla).fit(descriptors)
+    etiquetas = entrenamiento.labels_
     # TODO Guardar modelo con el nombre del experimento: parameters['name_model']
     np.save(parameters['name_model'], entrenamiento)
 
