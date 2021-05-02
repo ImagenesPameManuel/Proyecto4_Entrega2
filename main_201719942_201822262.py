@@ -18,7 +18,12 @@ def calculate_descriptors(data, parameters):
         data = list(map(parameters['transform_color_function'], data))
     bins = [parameters['bins']]*len(data)
     histograms = list(map(parameters['histogram_function'], data, bins))
-    descriptor_matrix = np.array(histograms)
+    flat_hists=[]
+    for descript in histograms:
+        flat_descript=descript.flatten()
+        #print(flat_descript.shape)
+        flat_hists.append(flat_descript)
+    descriptor_matrix = np.array(flat_hists)#np.array(histograms)
     # TODO Verificar tamaño de descriptor_matrix igual a # imágenes x dimensión del descriptor
     if not len(descriptor_matrix)*len(descriptor_matrix[0]) == parameters['bins']*len(data):
         print(len(descriptor_matrix)*len(descriptor_matrix[0]), bins)
@@ -43,11 +48,14 @@ def train(parameters, action):
     # TODO Inicializar y entrenar el modelo con los descriptores.
     entrenamiento = skclust.KMeans(parameters['k'], random_state=semilla).fit(descriptors)
     etiquetas = entrenamiento.labels_
+    #print(len(etiquetas),len(images_train))
+    #print(len(data_train),images_train)
     plt.figure()  # se plotean las imágenes resultantes
     for i in range(len(etiquetas)):
-        diccionario[data_train[i]] = etiquetas[i]
-        plt.subplot(8,6,i)
-        plt.title(f"Imágenes{i}\nCluster{etiquetas[i]}")
+        diccionario[f"Img {i+1}"] = etiquetas[i]
+        #diccionario[data_train[i]] = etiquetas[i]
+        plt.subplot(8,6,i+1)
+        plt.title(f"Imágenes{i+1}\nCluster{etiquetas[i]}")
         plt.axis("off")
         plt.imshow(images_train[i])
     plt.show()
