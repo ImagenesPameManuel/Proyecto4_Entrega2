@@ -65,9 +65,8 @@ def validate(parameters, action):
     modelo = np.load(parameters['name_model'])
     # TODO Obtener las predicciones para los descriptores de las imágenes de validación
     predicciones = modelo.predict(descriptors)
-    anotaciones
-    # TODO Obtener las métricas de evaluación
     anotaciones = []
+    # TODO Obtener las métricas de evaluación
     conf_mat = sk.metrics.confusion_matrix(anotaciones, predicciones)
     precision = sk.metrics.precision_score(anotaciones, predicciones)
     recall = sk.metrics.recall_score(anotaciones, predicciones)
