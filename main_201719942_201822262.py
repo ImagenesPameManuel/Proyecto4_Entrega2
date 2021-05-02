@@ -5,7 +5,8 @@
 import os
 import glob
 import numpy as np
-import sklearn as sk
+import sklearn.cluster as skclust
+import sklearn.metrics as sk
 from skimage import io
 from skimage import color
 import matplotlib.pyplot as plt
@@ -18,7 +19,9 @@ def calculate_descriptors(data, parameters):
     bins = [parameters['bins']]*len(data)
     histograms = list(map(parameters['histogram_function'], data, bins))
     descriptor_matrix = np.array(histograms)
-    # TODO Verificar tamaño de descriptor_matrix a # imágenes x dimensión del descriptor
+    # TODO Verificar tamaño de descriptor_matrix igual a # imágenes x dimensión del descriptor
+    if not len(descriptor_matrix)*len(descriptor_matrix[0]) == parameters['bins']*len(data):
+        print(len(descriptor_matrix)*len(descriptor_matrix[0]), bins)
     return descriptor_matrix
 
 def train(parameters, action):
@@ -28,15 +31,17 @@ def train(parameters, action):
     if action == 'save':
         descriptors = calculate_descriptors(images_train, parameters)
         # TODO Guardar matriz de descriptores con el nombre parameters['train_descriptor_name']
+        #print(descriptors)
         np.save(parameters['train_descriptor_name'], descriptors)
     else:
+        y = 0
         # Esta condición solo la tendrán que utilizar para la tercera entrega.
         # TODO Cargar matrices de parameters['train_descriptor_name']
-        descriptors = np.load(parameters['train_descriptor_name'])
+        # descriptors = np.load(parameters['train_descriptor_name'])
     # TODO Definir una semilla y utilice la misma para todos los experimentos de la entrega.
     semilla = 0
     # TODO Inicializar y entrenar el modelo con los descriptores.
-    entrenamiento = sk.cluster.KMeans(parameters['k'], random_state=semilla).fit(descriptors)
+    entrenamiento = skclust.KMeans(parameters['k'], random_state=semilla).fit(descriptors)
     etiquetas = entrenamiento.labels_
     plt.figure()  # se plotean las imágenes resultantes
     for i in range(len(etiquetas)):
@@ -53,9 +58,10 @@ def validate(parameters, action):
     data_val = os.path.join('data_mp4', 'scene_dataset', 'val', '*.jpg')
     images_val = list(map(io.imread, glob.glob(data_val)))
     if action == 'load':
+        y =0
         # Esta condición solo la tendrán que utilizar para la tercera entrega.
         # TODO Cargar matrices de parameters['val_descriptor_name']
-        descriptors = np.load(parameters['val_descriptor_name'])
+        #descriptors = np.load(parameters['val_descriptor_name'])
     else:
         descriptors = calculate_descriptors(images_val, parameters)
         if action == 'save':
@@ -67,10 +73,10 @@ def validate(parameters, action):
     predicciones = modelo.predict(descriptors)
     anotaciones = []
     # TODO Obtener las métricas de evaluación
-    conf_mat = sk.metrics.confusion_matrix(anotaciones, predicciones)
-    precision = sk.metrics.precision_score(anotaciones, predicciones)
-    recall = sk.metrics.recall_score(anotaciones, predicciones)
-    f_score = sk.metrics.f1_score(anotaciones, predicciones)
+    conf_mat = sk.confusion_matrix(anotaciones, predicciones)
+    precision = sk.precision_score(anotaciones, predicciones)
+    recall = sk.recall_score(anotaciones, predicciones)
+    f_score = sk.f1_score(anotaciones, predicciones)
     return conf_mat, precision, recall, f_score
 
 def main(parameters, perform_train, action):
