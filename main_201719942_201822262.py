@@ -8,6 +8,7 @@ import numpy as np
 import sklearn as sk
 from skimage import io
 from skimage import color
+import matplotlib.pyplot as plt
 from skimage import img_as_float
 from data_mp4.functions import JointColorHistogram, CatColorHistogram
 
@@ -23,6 +24,7 @@ def calculate_descriptors(data, parameters):
 def train(parameters, action):
     data_train = os.path.join('data_mp4', 'scene_dataset', 'train', '*.jpg')
     images_train = list(map(io.imread, glob.glob(data_train)))
+    diccionario = {}
     if action == 'save':
         descriptors = calculate_descriptors(images_train, parameters)
         # TODO Guardar matriz de descriptores con el nombre parameters['train_descriptor_name']
@@ -36,6 +38,14 @@ def train(parameters, action):
     # TODO Inicializar y entrenar el modelo con los descriptores.
     entrenamiento = sk.cluster.KMeans(parameters['k'], random_state=semilla).fit(descriptors)
     etiquetas = entrenamiento.labels_
+    plt.figure()  # se plotean las imágenes resultantes
+    for i in range(len(etiquetas)):
+        diccionario[data_train[i]] = etiquetas[i]
+        plt.subplot(8,6,i)
+        plt.title(f"Imágenes{i}\nCluster{etiquetas[i]}")
+        plt.axis("off")
+        plt.imshow(images_train[i])
+    plt.show()
     # TODO Guardar modelo con el nombre del experimento: parameters['name_model']
     np.save(parameters['name_model'], entrenamiento)
 
@@ -54,10 +64,10 @@ def validate(parameters, action):
     # TODO Cargar el modelo de parameters['name_model']
     modelo = np.load(parameters['name_model'])
     # TODO Obtener las predicciones para los descriptores de las imágenes de validación
-
+    predicciones = modelo.predict(descriptors)
+    anotaciones
     # TODO Obtener las métricas de evaluación
     anotaciones = []
-    predicciones = []
     conf_mat = sk.metrics.confusion_matrix(anotaciones, predicciones)
     precision = sk.metrics.precision_score(anotaciones, predicciones)
     recall = sk.metrics.recall_score(anotaciones, predicciones)
@@ -86,7 +96,7 @@ if __name__ == '__main__':
     ----------NO OPEN ACCESS!!!!!!!------------
     """
     numero_bins = 120
-    numero_cluster = 8
+    numero_cluster = 6 #corresponde con el número de clases
     nombre_modelo = 'modelo1.npy'
     nombre_entrenamiento = 'entrenamiento1.npy'
     nombre_validacion = 'validacion1.npy'
