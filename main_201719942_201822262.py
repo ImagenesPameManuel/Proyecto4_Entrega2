@@ -30,7 +30,7 @@ def calculate_descriptors(data, parameters):
     assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (parameters['bins']**3)*len(data), 'El tamaño del descriptor no es el adecuado'
     return descriptor_matrix
 
-diccionario = {}
+diccionario = {} # variable global para guardar cluster asignado para cada una de las clases trabajadas
 def train(parameters, action):
     data_train = os.path.join('data_mp4', 'scene_dataset', 'train', '*.jpg')
     #images_train = list(map(io.imread, glob.glob(data_train)))
@@ -57,14 +57,18 @@ def train(parameters, action):
     # TODO Inicializar y entrenar el modelo con los descriptores.
     entrenamiento = skclust.KMeans(parameters['k'], random_state=semilla).fit(descriptors)
     etiquetas = entrenamiento.labels_
-    #print(len(etiquetas),len(images_train))
-    #print(len(data_train),images_train)
+    #print(len(etiquetas),len(images_train)) #print(len(data_train),images_train)
     plt.figure()  # se plotean las imágenes resultantes
     for i in range(len(etiquetas)):
         if nombres[i] not in diccionario:
-            diccionario[nombres[i]] = [etiquetas[i]]
+            #diccionario[nombres[i]] = [etiquetas[i]]
+            diccionario[nombres[i]] = {etiquetas[i]: 1}
         else:
-            diccionario[nombres[i]].append(etiquetas[i])
+            if etiquetas[i] not in diccionario[nombres[i]]:
+                diccionario[nombres[i]][etiquetas[i]] = 1
+            else:
+                diccionario[nombres[i]][etiquetas[i]] += 1
+            #diccionario[nombres[i]].append(etiquetas[i])
             #diccionario[data_train[i]] = etiquetas[i]
         plt.subplot(8,6,i+1)
         plt.title(f"{nombres[i]}\nCluster{etiquetas[i]}")
