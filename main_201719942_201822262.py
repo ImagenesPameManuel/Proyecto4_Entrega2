@@ -39,7 +39,8 @@ def train(parameters, action):
     nombres = []
     global diccionario
     for i in rutas:
-        ruta = i.split("/")
+        ruta = i.split(i[8])
+        #print( ruta[-1])
         nombres.append(ruta[-1].split('_')[0])
     if action == 'save':
         descriptors = calculate_descriptors(images_train, parameters)
@@ -81,7 +82,7 @@ def validate(parameters, action):
     images_val = list(map(io.imread, rutas))
     nombres = []
     for i in rutas:
-        ruta = i.split("/")
+        ruta = i.split(i[8])
         nombres.append(ruta[-1].split('_')[0])
     if action == 'load':
         y = 0
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     Rogamos no hacer uso de este código por fuera del curso y de este semestre.
     ----------NO OPEN ACCESS!!!!!!!------------
     """
-    numero_bins = 40
+    numero_bins = 20
     numero_cluster = 6 #corresponde con el número de clases
     nombre_modelo = 'modelo1.npy'
     nombre_entrenamiento = 'entrenamiento1.npy'
