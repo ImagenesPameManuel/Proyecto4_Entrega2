@@ -104,22 +104,22 @@ def validate(parameters, action):
     anotaciones = []
     for i in nombres:
         if i == "glacier":
-            anotaciones.append(4)#
+            anotaciones.append(2)
             #anotaciones.append(mode(diccionario['glacier']))
         elif i == "buildings":
-            anotaciones.append(2)
+            anotaciones.append(0)
             #            anotaciones.append(mode(diccionario['buildings']))
         elif i == "forest":
-            anotaciones.append(3)#
+            anotaciones.append(5)
             #anotaciones.append(mode(diccionario['forest']))
         elif i == "mountains":
-            anotaciones.append(5)#
+            anotaciones.append(4)
             #anotaciones.append(mode(diccionario['mountains']))
         elif i == "sea":
-            anotaciones.append(1)
+            anotaciones.append(3)
             #            anotaciones.append(mode(diccionario['sea']))
         else:
-            anotaciones.append(0)#
+            anotaciones.append(1)
             #            anotaciones.append(mode(diccionario['street']))
     #print(anotaciones)
     #print(predicciones)
@@ -137,10 +137,11 @@ def main(parameters, perform_train, action):
     conf_mat, precision, recall, f_score = validate(parameters, action = action)
     #TODO Imprimir de manera organizada el resumen del experimento.
     # Incluyan los parámetros que usaron y las métricas de validación.
-    resp = f"Parámetros:\nEspacio: {parameters['space']}\nNúmero de Bins: {parameters['bins']}\nNúmero de clusters: " \
-           f"{parameters['k']}\nNombre del modelo: {parameters['name_model']}\nNombre del descriptor entrenamiento:" \
-           f"{parameters['train_descriptor_name']}\nNombre del descriptor validación: {parameters['val_descriptor_name']}" \
-           f"\nMatriz de confusión: {conf_mat}\nPrecisión: {precision}\nCobertura: {recall}\nF-score: {f_score}"
+    resp = f"Parámetros:\nNombre del modelo: {parameters['name_model']:15} | Nombre del descriptor entrenamiento:" \
+           f"{parameters['train_descriptor_name']:15} | Nombre del descriptor validación: {parameters['val_descriptor_name']:15}" \
+           f"\nEspacio: {parameters['space']:30} | Número de Bins: {parameters['bins']:39} | Número de clusters: " \
+           f"{parameters['k']:31}\n"\
+           f"Precisión: {precision:28} | Cobertura: {recall:44} | F-score: {f_score:42}\nMatriz de confusión:\n{conf_mat}"
     print(resp)
 if __name__ == '__main__':
     """
@@ -152,8 +153,8 @@ if __name__ == '__main__':
     Rogamos no hacer uso de este código por fuera del curso y de este semestre.
     ----------NO OPEN ACCESS!!!!!!!------------
     """
-    espacio='HSV'
-    numero_bins = 6
+    espacio='Lab'
+    numero_bins = 7
     numero_cluster = 6 #corresponde con el número de clases
     nombre_modelo = f'{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
     nombre_entrenamiento = f'{espacio}_b{numero_bins}_c{numero_cluster}_train.npy'
@@ -162,7 +163,7 @@ if __name__ == '__main__':
     # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
     # y clasificadores a utilizar.
     parameters= {'histogram_function': JointColorHistogram,
-             'space': espacio, 'transform_color_function': color.rgb2hsv, # Esto es solo un ejemplo.
+             'space': espacio, 'transform_color_function': color.rgb2lab, # Esto es solo un ejemplo.
              'bins': numero_bins, 'k': numero_cluster,
              'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
              'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
