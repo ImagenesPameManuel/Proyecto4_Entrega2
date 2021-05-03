@@ -70,6 +70,7 @@ def train(parameters, action):
         plt.title(f"{nombres[i]}\nCluster{etiquetas[i]}")
         plt.axis("off")
         plt.imshow(images_train[i])
+        plt.tight_layout()
     print(diccionario)
     plt.show()
     # TODO Guardar modelo con el nombre del experimento: parameters['name_model']
@@ -103,24 +104,31 @@ def validate(parameters, action):
     anotaciones = []
     for i in nombres:
         if i == "glacier":
-            anotaciones.append(mode(diccionario['glacier']))
+            anotaciones.append(4)#
+            #anotaciones.append(mode(diccionario['glacier']))
         elif i == "buildings":
-            anotaciones.append(mode(diccionario['buildings']))
+            anotaciones.append(2)
+            #            anotaciones.append(mode(diccionario['buildings']))
         elif i == "forest":
-            anotaciones.append(mode(diccionario['forest']))
+            anotaciones.append(3)#
+            #anotaciones.append(mode(diccionario['forest']))
         elif i == "mountains":
-            anotaciones.append(mode(diccionario['mountains']))
+            anotaciones.append(5)#
+            #anotaciones.append(mode(diccionario['mountains']))
         elif i == "sea":
-            anotaciones.append(mode(diccionario['sea']))
+            anotaciones.append(1)
+            #            anotaciones.append(mode(diccionario['sea']))
         else:
-            anotaciones.append(mode(diccionario['street']))
-    print(anotaciones)
+            anotaciones.append(0)#
+            #            anotaciones.append(mode(diccionario['street']))
+    #print(anotaciones)
+    #print(predicciones)
     # TODO Obtener las métricas de evaluación
     conf_mat = sk.confusion_matrix(anotaciones, predicciones)
-    precision = sk.precision_score(anotaciones, predicciones)
+    precision = sk.precision_score(anotaciones, predicciones,average="macro")
     #print(precision)
-    recall = sk.recall_score(anotaciones, predicciones)
-    f_score = sk.f1_score(anotaciones, predicciones)
+    recall = sk.recall_score(anotaciones, predicciones,average="macro")
+    f_score = sk.f1_score(anotaciones, predicciones,average="macro")
     return conf_mat, precision, recall, f_score
 
 def main(parameters, perform_train, action):
@@ -144,16 +152,17 @@ if __name__ == '__main__':
     Rogamos no hacer uso de este código por fuera del curso y de este semestre.
     ----------NO OPEN ACCESS!!!!!!!------------
     """
-    numero_bins = 20
+    espacio='HSV'
+    numero_bins = 6
     numero_cluster = 6 #corresponde con el número de clases
-    nombre_modelo = 'modelo1.npy'
-    nombre_entrenamiento = 'entrenamiento1.npy'
-    nombre_validacion = 'validacion1.npy'
+    nombre_modelo = f'{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
+    nombre_entrenamiento = f'{espacio}_b{numero_bins}_c{numero_cluster}_train.npy'
+    nombre_validacion = f'{espacio}_b{numero_bins}_c{numero_cluster}_val.npy'
     # TODO Establecer los valores de los parámetros con los que van a experimentar.
     # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
     # y clasificadores a utilizar.
     parameters= {'histogram_function': JointColorHistogram,
-             'space': 'Lab', 'transform_color_function': color.rgb2lab, # Esto es solo un ejemplo.
+             'space': espacio, 'transform_color_function': color.rgb2hsv, # Esto es solo un ejemplo.
              'bins': numero_bins, 'k': numero_cluster,
              'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
              'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
