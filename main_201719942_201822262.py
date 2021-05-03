@@ -4,6 +4,8 @@
 ##Se importan librerías que se utilizarán para el desarrollo del laboratorio
 import os
 import glob
+import pickle
+from statistics import mode
 import numpy as np
 import sklearn.cluster as skclust
 import sklearn.metrics as sk
@@ -18,21 +20,27 @@ def calculate_descriptors(data, parameters):
         data = list(map(parameters['transform_color_function'], data))
     bins = [parameters['bins']]*len(data)
     histograms = list(map(parameters['histogram_function'], data, bins))
+    # TODO Verificar tamaño de descriptor_matrix igual a # imágenes x dimensión del descriptor
     flat_hists=[]
     for descript in histograms:
         flat_descript=descript.flatten()
         #print(flat_descript.shape)
         flat_hists.append(flat_descript)
     descriptor_matrix = np.array(flat_hists)#np.array(histograms)
-    # TODO Verificar tamaño de descriptor_matrix igual a # imágenes x dimensión del descriptor
-    if not len(descriptor_matrix)*len(descriptor_matrix[0]) == parameters['bins']*len(data):
-        print(len(descriptor_matrix)*len(descriptor_matrix[0]), bins)
+    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (parameters['bins']**3)*len(data), 'El tamaño del descriptor no es el adecuado'
     return descriptor_matrix
 
+diccionario = {}
 def train(parameters, action):
     data_train = os.path.join('data_mp4', 'scene_dataset', 'train', '*.jpg')
-    images_train = list(map(io.imread, glob.glob(data_train)))
-    diccionario = {}
+    #images_train = list(map(io.imread, glob.glob(data_train)))
+    rutas = glob.glob(data_train)
+    images_train = list(map(io.imread, rutas))
+    nombres = []
+    global diccionario
+    for i in rutas:
+        ruta = i.split("/")
+        nombres.append(ruta[-1].split('_')[0])
     if action == 'save':
         descriptors = calculate_descriptors(images_train, parameters)
         # TODO Guardar matriz de descriptores con el nombre parameters['train_descriptor_name']
@@ -52,21 +60,31 @@ def train(parameters, action):
     #print(len(data_train),images_train)
     plt.figure()  # se plotean las imágenes resultantes
     for i in range(len(etiquetas)):
-        diccionario[f"Img {i+1}"] = etiquetas[i]
-        #diccionario[data_train[i]] = etiquetas[i]
+        if nombres[i] not in diccionario:
+            diccionario[nombres[i]] = [etiquetas[i]]
+        else:
+            diccionario[nombres[i]].append(etiquetas[i])
+            #diccionario[data_train[i]] = etiquetas[i]
         plt.subplot(8,6,i+1)
-        plt.title(f"Imágenes{i+1}\nCluster{etiquetas[i]}")
+        plt.title(f"{nombres[i]}\nCluster{etiquetas[i]}")
         plt.axis("off")
         plt.imshow(images_train[i])
+    print(diccionario)
     plt.show()
     # TODO Guardar modelo con el nombre del experimento: parameters['name_model']
-    np.save(parameters['name_model'], entrenamiento)
+    pickle.dump(entrenamiento, open(parameters['name_model'],'wb'))
+    #np.save(parameters['name_model'], entrenamiento)
 
 def validate(parameters, action):
     data_val = os.path.join('data_mp4', 'scene_dataset', 'val', '*.jpg')
-    images_val = list(map(io.imread, glob.glob(data_val)))
+    rutas = glob.glob(data_val)
+    images_val = list(map(io.imread, rutas))
+    nombres = []
+    for i in rutas:
+        ruta = i.split("/")
+        nombres.append(ruta[-1].split('_')[0])
     if action == 'load':
-        y =0
+        y = 0
         # Esta condición solo la tendrán que utilizar para la tercera entrega.
         # TODO Cargar matrices de parameters['val_descriptor_name']
         #descriptors = np.load(parameters['val_descriptor_name'])
@@ -76,13 +94,30 @@ def validate(parameters, action):
             # TODO Guardar matriz de descriptores con el nombre parameters['val_descriptor_name']
             np.save(parameters['val_descriptor_name'], descriptors)
     # TODO Cargar el modelo de parameters['name_model']
-    modelo = np.load(parameters['name_model'])
+    modelo = pickle.load(open(parameters['name_model'],'rb'))
+    #modelo = np.load(parameters['name_model'], allow_pickle=True)
+    #print(type(modelo))
     # TODO Obtener las predicciones para los descriptores de las imágenes de validación
     predicciones = modelo.predict(descriptors)
     anotaciones = []
+    for i in nombres:
+        if i == "glacier":
+            anotaciones.append(mode(diccionario['glacier']))
+        elif i == "buildings":
+            anotaciones.append(mode(diccionario['buildings']))
+        elif i == "forest":
+            anotaciones.append(mode(diccionario['forest']))
+        elif i == "mountains":
+            anotaciones.append(mode(diccionario['mountains']))
+        elif i == "sea":
+            anotaciones.append(mode(diccionario['sea']))
+        else:
+            anotaciones.append(mode(diccionario['street']))
+    print(anotaciones)
     # TODO Obtener las métricas de evaluación
     conf_mat = sk.confusion_matrix(anotaciones, predicciones)
     precision = sk.precision_score(anotaciones, predicciones)
+    #print(precision)
     recall = sk.recall_score(anotaciones, predicciones)
     f_score = sk.f1_score(anotaciones, predicciones)
     return conf_mat, precision, recall, f_score
@@ -97,7 +132,7 @@ def main(parameters, perform_train, action):
            f"{parameters['k']}\nNombre del modelo: {parameters['name_model']}\nNombre del descriptor entrenamiento:" \
            f"{parameters['train_descriptor_name']}\nNombre del descriptor validación: {parameters['val_descriptor_name']}" \
            f"\nMatriz de confusión: {conf_mat}\nPrecisión: {precision}\nCobertura: {recall}\nF-score: {f_score}"
-
+    print(resp)
 if __name__ == '__main__':
     """
     Por: Isabela Hernández y Natalia Valderrama
@@ -108,7 +143,7 @@ if __name__ == '__main__':
     Rogamos no hacer uso de este código por fuera del curso y de este semestre.
     ----------NO OPEN ACCESS!!!!!!!------------
     """
-    numero_bins = 120
+    numero_bins = 40
     numero_cluster = 6 #corresponde con el número de clases
     nombre_modelo = 'modelo1.npy'
     nombre_entrenamiento = 'entrenamiento1.npy'
@@ -117,7 +152,7 @@ if __name__ == '__main__':
     # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
     # y clasificadores a utilizar.
     parameters= {'histogram_function': JointColorHistogram,
-             'space': 'HSV', 'transform_color_function': color.rgb2hsv, # Esto es solo un ejemplo.
+             'space': 'Lab', 'transform_color_function': color.rgb2lab, # Esto es solo un ejemplo.
              'bins': numero_bins, 'k': numero_cluster,
              'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
              'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
