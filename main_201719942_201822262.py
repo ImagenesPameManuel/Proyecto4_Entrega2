@@ -21,13 +21,20 @@ def calculate_descriptors(data, parameters):
     bins = [parameters['bins']]*len(data)
     histograms = list(map(parameters['histogram_function'], data, bins))
     # TODO Verificar tamaño de descriptor_matrix igual a # imágenes x dimensión del descriptor
-    flat_hists=[]
-    for descript in histograms:
-        flat_descript=descript.flatten()
-        #print(flat_descript.shape)
-        flat_hists.append(flat_descript)
-    descriptor_matrix = np.array(flat_hists)#np.array(histograms)
-    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (parameters['bins']**3)*len(data), 'El tamaño del descriptor no es el adecuado'
+    if parameters['histogram_function'] == CatColorHistogram:
+        desc_long=parameters['bins']*3
+        descriptor_matrix = np.array(histograms)
+    else:
+        desc_long=parameters['bins'] ** 3
+        flat_hists=[]
+        for descript in histograms:
+            flat_descript=descript.flatten()
+            #print(flat_descript.shape)
+            flat_hists.append(flat_descript)
+        descriptor_matrix = np.array(flat_hists)#np.array(histograms)
+
+    #print(len(descriptor_matrix),len(descriptor_matrix[0]))
+    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (desc_long)*len(data), 'El tamaño del descriptor no es el adecuado'
     return descriptor_matrix
 
 diccionario = {} # variable global para guardar cluster asignado para cada una de las clases trabajadas
@@ -141,11 +148,15 @@ def main(parameters, perform_train, action):
     conf_mat, precision, recall, f_score = validate(parameters, action = action)
     #TODO Imprimir de manera organizada el resumen del experimento.
     # Incluyan los parámetros que usaron y las métricas de validación.
-    resp = f"Parámetros:\nNombre del modelo: {parameters['name_model']:15} | Nombre del descriptor entrenamiento:" \
-           f"{parameters['train_descriptor_name']:15} | Nombre del descriptor validación: {parameters['val_descriptor_name']:15}" \
-           f"\nEspacio: {parameters['space']:30} | Número de Bins: {parameters['bins']:39} | Número de clusters: " \
-           f"{parameters['k']:31}\n"\
-           f"Precisión: {precision:28} | Cobertura: {recall:44} | F-score: {f_score:42}\nMatriz de confusión:\n{conf_mat}"
+    if parameters['histogram_function'] == CatColorHistogram:
+        funcion_str="Concatenados"
+    else:
+        funcion_str="Conjuntos   "
+    resp = f"Parámetros:\nFunción de histograma: {funcion_str:37} | Nombre del modelo: {parameters['name_model']:25} " \
+           f"\nNombre del descriptor entrenamiento: {parameters['train_descriptor_name']:15} | Nombre del descriptor validación: {parameters['val_descriptor_name']:15}" \
+           f"\nEspacio: {parameters['space']:51} | Número de Bins: {parameters['bins']:39} " \
+           f"\nNúmero de clusters: {parameters['k']:40} | Precisión: {precision:44} " \
+           f"\nCobertura: {recall:49} | F-score: {f_score:46}\nMatriz de confusión:\n{conf_mat}"
     print(resp)
 if __name__ == '__main__':
     """
@@ -158,15 +169,20 @@ if __name__ == '__main__':
     ----------NO OPEN ACCESS!!!!!!!------------
     """
     espacio='Lab'
+    hist_function=JointColorHistogram
+    if hist_function == CatColorHistogram:
+        funcion_str="Cat_"
+    else:
+        funcion_str="Join"
     numero_bins = 7
     numero_cluster = 6 #corresponde con el número de clases
-    nombre_modelo = f'{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
-    nombre_entrenamiento = f'{espacio}_b{numero_bins}_c{numero_cluster}_train.npy'
-    nombre_validacion = f'{espacio}_b{numero_bins}_c{numero_cluster}_val.npy'
+    nombre_modelo = f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
+    nombre_entrenamiento = f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_train.npy'
+    nombre_validacion = f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_val.npy'
     # TODO Establecer los valores de los parámetros con los que van a experimentar.
     # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
     # y clasificadores a utilizar.
-    parameters= {'histogram_function': JointColorHistogram,
+    parameters= {'histogram_function': hist_function,
              'space': espacio, 'transform_color_function': color.rgb2lab, # Esto es solo un ejemplo.
              'bins': numero_bins, 'k': numero_cluster,
              'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
