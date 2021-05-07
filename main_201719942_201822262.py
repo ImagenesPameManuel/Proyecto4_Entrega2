@@ -157,7 +157,7 @@ if __name__ == '__main__':
         funcion_str="Join"
     numero_bins = 5
     numero_cluster = 6 #corresponde con el número de clases
-    nombre_modelo = f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
+    nombre_modelo = "best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
     nombre_entrenamiento = f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_train.npy'
     nombre_validacion = f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_val.npy'
     # TODO Establecer los valores de los parámetros con los que van a experimentar.
@@ -169,9 +169,8 @@ if __name__ == '__main__':
              'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
              'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
              'val_descriptor_name': nombre_validacion} # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de validación.
-
-    perform_train = True # Cambiar parámetro a False al momento de hacer la entrega
-    action = 'save' # Cambiar a None al momento de hacer la entrega
+    perform_train = False#True # Cambiar parámetro a False al momento de hacer la entrega
+    action = None#'save' # Cambiar a None al momento de hacer la entrega
     main(parameters=parameters, perform_train=perform_train, action=action)
 
 
