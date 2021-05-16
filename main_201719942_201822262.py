@@ -14,6 +14,9 @@ from skimage import color
 import matplotlib.pyplot as plt
 from skimage import img_as_float
 from data_mp4.functions import JointColorHistogram, CatColorHistogram
+from sklearn.cluster import KMeans
+from scipy.signal import correlate2d
+from scipy.io import loadmat, savemat
 
 def calculate_descriptors(data, parameters):
     if parameters['space'] != 'RGB':
@@ -172,5 +175,74 @@ if __name__ == '__main__':
     perform_train = False#True # Cambiar parámetro a False al momento de hacer la entrega
     action = None#'save' # Cambiar a None al momento de hacer la entrega
     main(parameters=parameters, perform_train=perform_train, action=action)
+
+
+# TODO Copiar y pegar estas funciones en el script principal (main_Codigo1_Codigo2.py)
+# TODO Cambiar el nombre de las funciones para incluir sus códigos de estudiante
+
+def calculateFilterResponse_201719942_201822262(img_gray, filters):
+    # TODO Inicializar arreglo de tamaño (MxN) x número de filtros, llamado 'resp'
+    resp = np.zeros((len(img_gray)*len(img_gray[0]), len(filters)))
+    # TODO Realizar un (1) ciclo que recorra los filtros
+    for i in range(len(filters)):
+        correlacion = correlate2d(img_gray, filters[i], boundary="symm")
+        resp[:, i] = np.transpose(correlacion.flatten())[:,0]
+    # TODO En cada iteración:
+    #           - Realizar cross-correlación entre la imagen y el filtro. Para ello, utilizar
+    #             correlate2d() y los parámetros que considere pertinentes para no perder el
+    #             tamaño original de la imagen.
+    #           - Convertir el resultado a un vector y almacenarlo en la posición correspondiente
+    #             del arreglo inicial.
+    return resp
+
+
+def calculateTextonDictionary_201719942_201822262(images_train, filters, parameters):
+
+    # TODO Inicializar arreglo de respuestas de tamaño [(MxN) x número de imágenes] x número de filtros
+    M_N = len(images_train[0]) * len(images_train[0][0])
+    resp = np.zeros(((M_N) * len(images_train), len(filters)))
+    for i in range(len(images_train)):
+        imgGris = color.rgb2gray(images_train[i])
+        respBanco = calculateFilterResponse_201719942_201822262(imgGris, filters)
+        resp[i*M_N:M_N * (i+1), :] = respBanco
+    # TODO Realizar un (1) ciclo que recorra todas las imágenes de entrenamiento
+    # TODO En cada iteración:
+    #           - Calcular la respuesta de la imagen al banco de filtros (función anterior)
+    #           - Almacenar la matriz resultante en el arreglo de respuestas (tenga en cuenta
+    #             la posición de los pixeles de cada imagen dentro del arreglo de respuestas)
+
+    # TODO Establecer semilla
+    semilla = 0
+    # TODO Declarar el modelo de KMeans
+    # TODO Ajustar el modelo inicializado al arreglo de resultados del punto anterior
+    modelo_kmeans = KMeans(parameters['k'], random_state=semilla).fit(resp)
+    # TODO Obtener las coordenadas de los centroides en una variable y almacenarlas
+    #       en un diccionario, bajo la llave 'centroids'
+    dic = {'centroids': modelo_kmeans.cluster_centers_}
+    # TODO Almacenar el diccionario anterior como un archivo .mat, bajo el nombre
+    #       'dictname' (parámetro de entrada)
+    savemat(parameters['dictname'], dic) # PREGUNTAR POR DICTNAME VS DICT_NAME
+ # TODO Borrar los comentarios marcados con un TODO.
+
+def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
+    bins = len(centroids)
+    dic = {}
+    for i in range(len(img_gray)):
+        for j in range(len(img_gray[0])):
+            menorDist = 0
+            centroTemp = None
+            for k in range(len(centroids[0])):
+                
+    return hist
+ ##
+test = np.array([[0,0,0],[0,0,0],[0,0,0]])
+vDeVector = np.transpose(np.array([[1, 2, 3]]))
+print(test)
+print(vDeVector)
+#test[:,1] = vDeVector[:,0]
+#print(test)
+miniMatrizParaPamePorqueLeEncanta = np.array([[1, 2, 3], [4, 5, 6]])
+test[1:3, :] = miniMatrizParaPamePorqueLeEncanta
+print(test)
 
 
