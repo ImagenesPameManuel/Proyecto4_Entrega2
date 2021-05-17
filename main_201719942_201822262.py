@@ -17,11 +17,17 @@ from data_mp4.functions import JointColorHistogram, CatColorHistogram
 from sklearn.cluster import KMeans
 from scipy.signal import correlate2d
 from scipy.io import loadmat, savemat
+from scipy.spatial import distance
 
-def calculate_descriptors(data, parameters):
-    if parameters['space'] != 'RGB':
-        data = list(map(parameters['transform_color_function'], data))
+def calculate_descriptors(data, parameters, calculate_dict):
+    filtros = loadmat('filterbank.mat')
+    dataGris = list(map(parameters['transform_color_function'], data))
     bins = [parameters['bins']]*len(data)
+
+    if calculate_dict:
+        for i in range(len(dataGris)):
+            resp = calculateFilterResponse_201719942_201822262(dataGris[i], filtros)
+            calculateTextonDictionary_201719942_201822262()
     histograms = list(map(parameters['histogram_function'], data, bins))
     # TODO Verificar tamaño de descriptor_matrix igual a # imágenes x dimensión del descriptor
     # se realizan ajustes si son necesarios para cada una de las funciones
@@ -167,7 +173,7 @@ if __name__ == '__main__':
     # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
     # y clasificadores a utilizar.
     parameters= {'histogram_function': hist_function,
-             'space': espacio, 'transform_color_function': color.rgb2lab, # Esto es solo un ejemplo.
+             'space': espacio, 'transform_color_function': color.rgb2gray, # Esto es solo un ejemplo.
              'bins': numero_bins, 'k': numero_cluster,
              'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
              'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
@@ -221,28 +227,36 @@ def calculateTextonDictionary_201719942_201822262(images_train, filters, paramet
     dic = {'centroids': modelo_kmeans.cluster_centers_}
     # TODO Almacenar el diccionario anterior como un archivo .mat, bajo el nombre
     #       'dictname' (parámetro de entrada)
-    savemat(parameters['dictname'], dic) # PREGUNTAR POR DICTNAME VS DICT_NAME
+    savemat(parameters['dict_name'], dic) # PREGUNTAR POR DICTNAME VS DICT_NAME
  # TODO Borrar los comentarios marcados con un TODO.
 
 def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
     bins = len(centroids)
-    dic = {}
+    copiaImagen = img_gray.copy()
     for i in range(len(img_gray)):
         for j in range(len(img_gray[0])):
             menorDist = 0
             centroTemp = None
             for k in range(len(centroids[0])):
-                
+                pnt1 = np.array([i,j])
+                pnt2 = np.array([centroids[0][k], centroids[1][k]])
+                if menorDist > distance.euclidean(pnt1, pnt2):
+                    menorDist = distance.euclidean(pnt1, pnt2)
+                    centroTemp = k
+            copiaImagen[i][j] = centroTemp
+    copiaImagen.flatten()
+    hist = np.histogram(copiaImagen, bins=bins)
     return hist
  ##
 test = np.array([[0,0,0],[0,0,0],[0,0,0]])
 vDeVector = np.transpose(np.array([[1, 2, 3]]))
-print(test)
-print(vDeVector)
+
 #test[:,1] = vDeVector[:,0]
 #print(test)
 miniMatrizParaPamePorqueLeEncanta = np.array([[1, 2, 3], [4, 5, 6]])
 test[1:3, :] = miniMatrizParaPamePorqueLeEncanta
-print(test)
 
+a = np.array([1, 2])
+b = np.array([2,4])
+c = distance.euclidean(a, b)
 
