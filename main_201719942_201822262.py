@@ -9,6 +9,7 @@ from statistics import mode
 import numpy as np
 import sklearn.cluster as skclust
 import sklearn.metrics as sk
+import tqdm as tqdm
 from skimage import io
 from skimage import color
 import matplotlib.pyplot as plt
@@ -19,14 +20,14 @@ from scipy.signal import correlate2d
 from scipy.io import loadmat, savemat
 from scipy.spatial import distance
 from sklearn import svm
+from tqdm import tqdm
 
 def calculate_descriptors(data, parameters, calculate_dict):
     filtros = loadmat('filterbank.mat')
-    bins = [parameters['bins']]*len(data)
     dataGris = list(map(parameters['transform_color_function'], data))
     if calculate_dict:
         calculateTextonDictionary_201719942_201822262(data, filtros, parameters)
-    dic = loadmat('dict_name')
+    dic = loadmat(parameters['dict_name'])
     centroides = dic['centroids']
     # descriptor_matrix = np.zeros(len(data), parameters['k'])
     descriptor_matrix = list(map(CalculateTextonHistogram_201719942_201822262, dataGris, centroides))
@@ -121,63 +122,23 @@ def validate(parameters, action):
     recall = sk.recall_score(nombres, predicciones, average="macro")
     f_score = sk.f1_score(nombres, predicciones, average="macro")                                                                                                                                #print((2*precision*recall)/(precision+recall))
     return conf_mat, precision, recall, f_score
-
-def main(parameters, perform_train, action):
-    if perform_train:
-        train(parameters, action = action)
-    conf_mat, precision, recall, f_score = validate(parameters, action = action)
-    #TODO Imprimir de manera organizada el resumen del experimento.
-    # Incluyan los parámetros que usaron y las métricas de validación.
-    if parameters['histogram_function'] == CatColorHistogram:
-        funcion_str="Concatenados"
-    else:
-        funcion_str="Conjuntos   "
-    resp = f"Parámetros:\nFunción de histograma: {funcion_str:37} | Nombre del modelo: {parameters['name_model']:25} " \
-           f"\nNombre del descriptor entrenamiento: {parameters['train_descriptor_name']:15} | Nombre del descriptor validación: {parameters['val_descriptor_name']:15}" \
-           f"\nEspacio: {parameters['space']:51} | Número de Bins: {parameters['bins']:39} " \
-           f"\nNúmero de clusters: {parameters['k']:40} | Precisión: {precision:44} " \
-           f"\nCobertura: {recall:49} | F-score: {f_score:46}\nMatriz de confusión:\n{conf_mat}"
-    print(resp)
-if __name__ == '__main__':
-    """
-    Por: Isabela Hernández y Natalia Valderrama
-    Este código establece los parámetros de experimentación. Permite extraer
-    los descriptores de las imágenes, entrenar un modelo de clasificación con estos
-    y validar su desempeño.
-    Nota: Este código fue diseñado para los estudiantes de IBIO-3470 2021-10.
-    Rogamos no hacer uso de este código por fuera del curso y de este semestre.
-    ----------NO OPEN ACCESS!!!!!!!------------
-    """
-    kernel = "linear" #{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’}
-    numero_cluster = 6 #corresponde con el número de clases
-    dictName = f'SVMk{kernel}_c{numero_cluster}_dict.npy'
-    nombre_modelo = f'SVMk{kernel}_c{numero_cluster}_modelo.npy'#"best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
-    nombre_entrenamiento = f'SVMk{kernel}_c{numero_cluster}_train.npy'
-    nombre_validacion = f'SVMk{kernel}_c{numero_cluster}_val.npy'
-    # TODO Establecer los valores de los parámetros con los que van a experimentar.
-    # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
-    # y clasificadores a utilizar.
-    parameters= {'kernel': kernel, 'dict_name': dictName,
-             'transform_color_function': color.rgb2gray, # Esto es solo un ejemplo.
-             'k': numero_cluster,
-             'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
-             'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
-             'val_descriptor_name': nombre_validacion} # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de validación.
-    perform_train = False#True # Cambiar parámetro a False al momento de hacer la entrega
-    action = None#'save' # Cambiar a None al momento de hacer la entrega
-    main(parameters=parameters, perform_train=perform_train, action=action)
-# 'bins': numero_bins,
-
 # TODO Copiar y pegar estas funciones en el script principal (main_Codigo1_Codigo2.py)
 # TODO Cambiar el nombre de las funciones para incluir sus códigos de estudiante
 
 def calculateFilterResponse_201719942_201822262(img_gray, filters):
     # TODO Inicializar arreglo de tamaño (MxN) x número de filtros, llamado 'resp'
-    resp = np.zeros((len(img_gray)*len(img_gray[0]), len(filters)))
+    #print((len(img_gray)*len(img_gray[0])))
+    resp = np.zeros((len(img_gray)*len(img_gray[0]), len(filters['filterbank'])))
     # TODO Realizar un (1) ciclo que recorra los filtros
-    for i in range(len(filters)):
-        correlacion = correlate2d(img_gray, filters[i], boundary="symm")
-        resp[:, i] = np.transpose(correlacion.flatten())[:,0]
+    for i in tqdm(range(len(filters['filterbank']))):
+        #print(filters['filterbank'])
+        correlacion = correlate2d(img_gray, filters['filterbank'][i], boundary="symm", mode='same')
+        #print(len(correlacion) * len(correlacion[0]))
+        correlacion = np.transpose(np.array([correlacion.flatten()]))
+        #print(correlacion)
+        #print(len(correlacion))
+        resp[:, i] = (correlacion)[:, 0]
+        #print(resp)
     # TODO En cada iteración:
     #           - Realizar cross-correlación entre la imagen y el filtro. Para ello, utilizar
     #             correlate2d() y los parámetros que considere pertinentes para no perder el
@@ -191,7 +152,7 @@ def calculateTextonDictionary_201719942_201822262(images_train, filters, paramet
 
     # TODO Inicializar arreglo de respuestas de tamaño [(MxN) x número de imágenes] x número de filtros
     M_N = len(images_train[0]) * len(images_train[0][0])
-    resp = np.zeros(((M_N) * len(images_train), len(filters)))
+    resp = np.zeros(((M_N) * len(images_train), len(filters['filterbank'])))
     for i in range(len(images_train)):
         imgGris = color.rgb2gray(images_train[i])
         respBanco = calculateFilterResponse_201719942_201822262(imgGris, filters)
@@ -216,6 +177,7 @@ def calculateTextonDictionary_201719942_201822262(images_train, filters, paramet
  # TODO Borrar los comentarios marcados con un TODO.
 
 def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
+    print(centroids)
     bins = len(centroids)
     copiaImagen = img_gray.copy()
     for i in range(len(img_gray)):
@@ -232,6 +194,49 @@ def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
     copiaImagen.flatten()
     hist = np.histogram(copiaImagen, bins=bins)
     return hist[0]
+
+def main(parameters, perform_train, action):
+    if perform_train:
+        train(parameters, action = action)
+    conf_mat, precision, recall, f_score = validate(parameters, action = action)
+    #TODO Imprimir de manera organizada el resumen del experimento.
+    # Incluyan los parámetros que usaron y las métricas de validación.
+    resp = f"Parámetros:\nNombre diccionario: {parameters['dict_name']:37} | Nombre del modelo: {parameters['name_model']:25} " \
+           f"\nNombre del descriptor entrenamiento: {parameters['train_descriptor_name']:15} | Nombre del descriptor validación: {parameters['val_descriptor_name']:15}" \
+           f"\nKernel: {parameters['kernel']:51} " \
+           f"\nNúmero de clusters: {parameters['k']:40} | Precisión: {precision:44} " \
+           f"\nCobertura: {recall:49} | F-score: {f_score:46}\nMatriz de confusión:\n{conf_mat}"
+    print(resp)
+if __name__ == '__main__':
+    """
+    Por: Isabela Hernández y Natalia Valderrama
+    Este código establece los parámetros de experimentación. Permite extraer
+    los descriptores de las imágenes, entrenar un modelo de clasificación con estos
+    y validar su desempeño.
+    Nota: Este código fue diseñado para los estudiantes de IBIO-3470 2021-10.
+    Rogamos no hacer uso de este código por fuera del curso y de este semestre.
+    ----------NO OPEN ACCESS!!!!!!!------------
+    """
+    kernel = "linear" #{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’}
+    numero_cluster = 6 #corresponde con el número de clases
+    dictName = f'SVMk{kernel}_c{numero_cluster}_dict.mat'
+    nombre_modelo = f'SVMk{kernel}_c{numero_cluster}_modelo.npy'#"best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
+    nombre_entrenamiento = f'SVMk{kernel}_c{numero_cluster}_train.npy'
+    nombre_validacion = f'SVMk{kernel}_c{numero_cluster}_val.npy'
+    # TODO Establecer los valores de los parámetros con los que van a experimentar.
+    # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
+    # y clasificadores a utilizar.
+    parameters= {'kernel': kernel, 'dict_name': dictName,
+             'transform_color_function': color.rgb2gray, # Esto es solo un ejemplo.
+             'k': numero_cluster,
+             'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
+             'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
+             'val_descriptor_name': nombre_validacion} # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de validación.
+    perform_train = False#True # Cambiar parámetro a False al momento de hacer la entrega
+    action = None#'save' # Cambiar a None al momento de hacer la entrega
+    main(parameters=parameters, perform_train=perform_train, action=action)
+# 'bins': numero_bins,
+
  ##
 test = np.array([[0,0,0],[0,0,0],[0,0,0]])
 vDeVector = np.transpose(np.array([[1, 2, 3]]))
