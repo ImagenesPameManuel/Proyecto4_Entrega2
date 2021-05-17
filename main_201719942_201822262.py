@@ -148,19 +148,12 @@ if __name__ == '__main__':
     Rogamos no hacer uso de este código por fuera del curso y de este semestre.
     ----------NO OPEN ACCESS!!!!!!!------------
     """
-    espacio='Lab' # variables para almacenar parámetros y facilitar su modificación
-    hist_function=CatColorHistogram#JointColorHistogram#
-    if hist_function == CatColorHistogram:
-        funcion_str="Cat_"
-    else:
-        funcion_str="Join"
-    kernerl = ""
-    dictName = ""
-    numero_bins = 5
+    kernel = ""
     numero_cluster = 6 #corresponde con el número de clases
-    nombre_modelo = "best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
-    nombre_entrenamiento = f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_train.npy'
-    nombre_validacion = f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_val.npy'
+    dictName = f'SVMk{kernel}_c{numero_cluster}_dict.npy'
+    nombre_modelo = f'SVMk{kernel}_c{numero_cluster}_modelo.npy'#"best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
+    nombre_entrenamiento = f'SVMk{kernel}_c{numero_cluster}_train.npy'
+    nombre_validacion = f'SVMk{kernel}_c{numero_cluster}_val.npy'
     # TODO Establecer los valores de los parámetros con los que van a experimentar.
     # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
     # y clasificadores a utilizar.
