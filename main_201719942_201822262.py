@@ -18,6 +18,7 @@ from sklearn.cluster import KMeans
 from scipy.signal import correlate2d
 from scipy.io import loadmat, savemat
 from scipy.spatial import distance
+from sklearn import svm
 
 def calculate_descriptors(data, parameters, calculate_dict):
     filtros = loadmat('filterbank.mat')
@@ -44,7 +45,7 @@ def train(parameters, action):
         ruta = i.split(i[8]) # extracción de anotación            #print( ruta[-1])
         nombres.append(ruta[-1].split('_')[0])
     if action == 'save':
-        descriptors = calculate_descriptors(images_train, parameters)
+        descriptors = calculate_descriptors(images_train, parameters, True)
         # TODO Guardar matriz de descriptores con el nombre parameters['train_descriptor_name']
         np.save(parameters['train_descriptor_name'], descriptors)         #print(descriptors)
     else:
@@ -53,12 +54,12 @@ def train(parameters, action):
         # TODO Cargar matrices de parameters['train_descriptor_name']
         # descriptors = np.load(parameters['train_descriptor_name'])
     # TODO Definir una semilla y utilice la misma para todos los experimentos de la entrega.
-    semilla = 0
+    kernel = parameters['kernel']
     # TODO Inicializar y entrenar el modelo con los descriptores.
-    entrenamiento = skclust.KMeans(parameters['k'], random_state=semilla).fit(descriptors)
-    etiquetas = entrenamiento.labels_                 #print(len(etiquetas),len(images_train)) #print(len(data_train),images_train)
-    plt.figure()  # se plotean las imágenes resultantes
-    for i in range(len(etiquetas)):
+    entrenamiento_SVM = svm.SVC(kernel=kernel).fit(descriptors, nombres)
+    #etiquetas = entrenamiento.labels_
+    #plt.figure()  # se plotean las imágenes resultantes
+    '''for i in range(len(etiquetas)):
         if nombres[i] not in diccionario: #conteo de asignación de clusters para cada una de las etiquetas
             #diccionario[nombres[i]] = [etiquetas[i]]
             diccionario[nombres[i]] = {etiquetas[i]: 1}
@@ -74,9 +75,9 @@ def train(parameters, action):
         plt.imshow(images_train[i])
         plt.tight_layout()
     #print(diccionario)
-    plt.show()
+    plt.show()'''
     # TODO Guardar modelo con el nombre del experimento: parameters['name_model']
-    pickle.dump(entrenamiento, open(parameters['name_model'],'wb'))
+    pickle.dump(entrenamiento_SVM, open(parameters['name_model'],'wb'))
 
 def validate(parameters, action):
     data_val = os.path.join('data_mp4', 'scene_dataset', 'val', '*.jpg')
@@ -92,15 +93,15 @@ def validate(parameters, action):
         # TODO Cargar matrices de parameters['val_descriptor_name']
         #descriptors = np.load(parameters['val_descriptor_name'])
     else:
-        descriptors = calculate_descriptors(images_val, parameters)
+        descriptors = calculate_descriptors(images_val, parameters, True)
         if action == 'save':
             # TODO Guardar matriz de descriptores con el nombre parameters['val_descriptor_name']
             np.save(parameters['val_descriptor_name'], descriptors)
     # TODO Cargar el modelo de parameters['name_model']
-    modelo = pickle.load(open(parameters['name_model'],'rb'))        #print(type(modelo))
+    modelo = pickle.load(open(parameters['name_model'], 'rb'))        #print(type(modelo))
     # TODO Obtener las predicciones para los descriptores de las imágenes de validación
     predicciones = modelo.predict(descriptors)
-    anotaciones = []
+    '''anotaciones = []
     for i in nombres:  # Diccionario con el cual se determinó qué clase correspondía a que anotación: {'buildings': {2: 2, 1: 2, 4: 2, 0: 1, 5: 1}, 'forest': {3: 5, 4: 3}, 'glacier': {1: 1, 5: 3, 0: 2, 4: 1, 3: 1}, 'mountains': {4: 5, 3: 2, 1: 1}, 'sea': {4: 4, 1: 3, 2: 1}, 'street': {1: 4, 3: 1, 0: 2, 2: 1}}
         if i == "glacier":
             anotaciones.append(5)#                                                   anotaciones.append(mode(diccionario['glacier']))
@@ -113,12 +114,12 @@ def validate(parameters, action):
         elif i == "sea":
             anotaciones.append(2)#                                             anotaciones.append(mode(diccionario['sea']))
         else:
-            anotaciones.append(1)#                                              anotaciones.append(mode(diccionario['street']))
+            anotaciones.append(1)#                                              anotaciones.append(mode(diccionario['street']))'''
     # TODO Obtener las métricas de evaluación
-    conf_mat = sk.confusion_matrix(anotaciones, predicciones)
-    precision = sk.precision_score(anotaciones, predicciones,average="macro")
-    recall = sk.recall_score(anotaciones, predicciones,average="macro")
-    f_score = sk.f1_score(anotaciones, predicciones,average="macro")                                                                                                                                #print((2*precision*recall)/(precision+recall))
+    conf_mat = sk.confusion_matrix(nombres, predicciones)
+    precision = sk.precision_score(nombres, predicciones, average="macro")
+    recall = sk.recall_score(nombres, predicciones, average="macro")
+    f_score = sk.f1_score(nombres, predicciones, average="macro")                                                                                                                                #print((2*precision*recall)/(precision+recall))
     return conf_mat, precision, recall, f_score
 
 def main(parameters, perform_train, action):
@@ -153,6 +154,8 @@ if __name__ == '__main__':
         funcion_str="Cat_"
     else:
         funcion_str="Join"
+    kernerl = ""
+    dictName = ""
     numero_bins = 5
     numero_cluster = 6 #corresponde con el número de clases
     nombre_modelo = "best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
@@ -161,16 +164,16 @@ if __name__ == '__main__':
     # TODO Establecer los valores de los parámetros con los que van a experimentar.
     # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
     # y clasificadores a utilizar.
-    parameters= {'histogram_function': hist_function,
-             'space': espacio, 'transform_color_function': color.rgb2gray, # Esto es solo un ejemplo.
-             'bins': numero_bins, 'k': numero_cluster,
+    parameters= {'kernel': kernel, 'dict_name': dictName,
+             'transform_color_function': color.rgb2gray, # Esto es solo un ejemplo.
+             'k': numero_cluster,
              'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
              'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
              'val_descriptor_name': nombre_validacion} # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de validación.
     perform_train = False#True # Cambiar parámetro a False al momento de hacer la entrega
     action = None#'save' # Cambiar a None al momento de hacer la entrega
     main(parameters=parameters, perform_train=perform_train, action=action)
-
+# 'bins': numero_bins,
 
 # TODO Copiar y pegar estas funciones en el script principal (main_Codigo1_Codigo2.py)
 # TODO Cambiar el nombre de las funciones para incluir sus códigos de estudiante
