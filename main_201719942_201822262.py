@@ -148,7 +148,7 @@ if __name__ == '__main__':
     Rogamos no hacer uso de este código por fuera del curso y de este semestre.
     ----------NO OPEN ACCESS!!!!!!!------------
     """
-    kernel = ""
+    kernel = "linear" #{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’}
     numero_cluster = 6 #corresponde con el número de clases
     dictName = f'SVMk{kernel}_c{numero_cluster}_dict.npy'
     nombre_modelo = f'SVMk{kernel}_c{numero_cluster}_modelo.npy'#"best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
