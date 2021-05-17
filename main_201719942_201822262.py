@@ -21,27 +21,16 @@ from scipy.spatial import distance
 
 def calculate_descriptors(data, parameters, calculate_dict):
     filtros = loadmat('filterbank.mat')
-    dataGris = list(map(parameters['transform_color_function'], data))
     bins = [parameters['bins']]*len(data)
-
+    dataGris = list(map(parameters['transform_color_function'], data))
     if calculate_dict:
-        for i in range(len(dataGris)):
-            resp = calculateFilterResponse_201719942_201822262(dataGris[i], filtros)
-            calculateTextonDictionary_201719942_201822262()
-    histograms = list(map(parameters['histogram_function'], data, bins))
-    # TODO Verificar tamaño de descriptor_matrix igual a # imágenes x dimensión del descriptor
-    # se realizan ajustes si son necesarios para cada una de las funciones
-    if parameters['histogram_function'] == CatColorHistogram:
-        desc_long=parameters['bins']*3 #tamaño descriptor para histogramas contatenados
-        descriptor_matrix = np.array(histograms)
-    else:
-        desc_long=parameters['bins'] ** 3 #tamaño descriptor para histogramas conjuntos
-        flat_hists=[]
-        for descript in histograms: # ajuste de dimensiones de la matriz de descritptores
-            flat_descript=descript.flatten()                             #print(flat_descript.shape)
-            flat_hists.append(flat_descript)
-        descriptor_matrix = np.array(flat_hists)           #np.array(histograms)                       #print(len(descriptor_matrix),len(descriptor_matrix[0]))
-    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (desc_long)*len(data), 'El tamaño del descriptor no es el adecuado' # verificación
+        calculateTextonDictionary_201719942_201822262(data, filtros, parameters)
+    dic = loadmat('dict_name')
+    centroides = dic['centroids']
+    # descriptor_matrix = np.zeros(len(data), parameters['k'])
+    descriptor_matrix = list(map(CalculateTextonHistogram_201719942_201822262, dataGris, centroides))
+
+    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (parameters['k'])*len(data), 'El tamaño del descriptor no es el adecuado' # verificación
     return descriptor_matrix
 
 diccionario = {} # variable global para guardar cluster asignado para cada una de las clases trabajadas
@@ -246,7 +235,7 @@ def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
             copiaImagen[i][j] = centroTemp
     copiaImagen.flatten()
     hist = np.histogram(copiaImagen, bins=bins)
-    return hist
+    return hist[0]
  ##
 test = np.array([[0,0,0],[0,0,0],[0,0,0]])
 vDeVector = np.transpose(np.array([[1, 2, 3]]))
