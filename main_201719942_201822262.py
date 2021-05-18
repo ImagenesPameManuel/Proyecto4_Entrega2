@@ -177,9 +177,9 @@ def calculateTextonDictionary_201719942_201822262(images_train, filters, paramet
  # TODO Borrar los comentarios marcados con un TODO.
 
 def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
-    print(centroids)
+    #print(centroids)
     bins = len(centroids)
-    copiaImagen = img_gray.copy()
+    """copiaImagen = img_gray.copy()
     for i in range(len(img_gray)):
         for j in range(len(img_gray[0])):
             menorDist = 0
@@ -190,8 +190,22 @@ def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
                 if menorDist > distance.euclidean(pnt1, pnt2):
                     menorDist = distance.euclidean(pnt1, pnt2)
                     centroTemp = k
-            copiaImagen[i][j] = centroTemp
-    copiaImagen.flatten()
+            copiaImagen[i][j] = centroTemp"""
+
+    filtros = loadmat('filterbank.mat')
+    respBanco = calculateFilterResponse_201719942_201822262(img_gray, filtros)
+    copiaImagen = respBanco.copy()
+    #   print(len(respBanco))
+    for i in range(len(respBanco)):
+        menorDist = 0
+        centroTemp = None
+        for k in range(len(centroids)):
+            distandia_euc=np.linalg.norm(respBanco[i]-centroids[k],ord=-1) #SALE ERROR ValueError: autodetected range of [nan, nan] is not finite
+            if menorDist > distandia_euc:
+                menorDist = distandia_euc
+                centroTemp = k
+        copiaImagen[i]=centroTemp
+    #copiaImagen.flatten()
     hist = np.histogram(copiaImagen, bins=bins)
     return hist[0]
 
