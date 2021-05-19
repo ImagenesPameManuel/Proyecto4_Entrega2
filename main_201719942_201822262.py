@@ -16,6 +16,7 @@ from skimage import color
 import matplotlib.pyplot as plt
 from skimage import img_as_float
 from data_mp4.functions import JointColorHistogram, CatColorHistogram
+from data_mp4.pykernels.regular import GeneralizedHistogramIntersection
 from sklearn.cluster import KMeans
 from scipy.signal import correlate2d
 from scipy.io import loadmat, savemat
@@ -49,14 +50,14 @@ def train(parameters, action):
         ruta = i.split(i[8]) # extracción de anotación            #print( ruta[-1])
         nombres.append(ruta[-1].split('_')[0])
     if action == 'save':
-        descriptors = calculate_descriptors(images_train, parameters, True)
+        descriptors = calculate_descriptors(images_train, parameters, False)
         # TODO Guardar matriz de descriptores con el nombre parameters['train_descriptor_name']
         np.save(parameters['train_descriptor_name'], descriptors)         #print(descriptors)
     else:
         y = 0
         # Esta condición solo la tendrán que utilizar para la tercera entrega.
         # TODO Cargar matrices de parameters['train_descriptor_name']
-        #  np.load(parameters['train_descriptor_name'])
+        descriptors = pickle.load(open(parameters['train_descriptor_name'], 'rb'))
     # TODO Definir una semilla y utilice la misma para todos los experimentos de la entrega.
     kernel = parameters['kernel']
     # TODO Inicializar y entrenar el modelo con los descriptores.
@@ -98,9 +99,9 @@ def validate(parameters, action):
         y = 0
         # Esta condición solo la tendrán que utilizar para la tercera entrega.
         # TODO Cargar matrices de parameters['val_descriptor_name']
-        #descriptors = np.load(parameters['val_descriptor_name'])
+        descriptors = pickle.load(open(parameters['val_descriptor_name'], 'rb'))
     else:
-        descriptors = calculate_descriptors(images_val, parameters, True)
+        descriptors = calculate_descriptors(images_val, parameters, False)
         if action == 'save':
             # TODO Guardar matriz de descriptores con el nombre parameters['val_descriptor_name']
             np.save(parameters['val_descriptor_name'], descriptors)
@@ -236,8 +237,8 @@ def main(parameters, perform_train, action):
     # Incluyan los parámetros que usaron y las métricas de validación.
     resp = f"Parámetros:\nNombre diccionario: {parameters['dict_name']:37} | Nombre del modelo: {parameters['name_model']:25} " \
            f"\nNombre del descriptor entrenamiento: {parameters['train_descriptor_name']:15} | Nombre del descriptor validación: {parameters['val_descriptor_name']:15}" \
-           f"\nKernel: {parameters['kernel']:51} " \
-           f"\nNúmero de clusters: {parameters['k']:40} | Precisión: {precision:44} " \
+           f"\nKernel: {parameters['kernel']} " \
+           f"\nTamaño del diccionario: {parameters['k']:40} | Precisión: {precision:44} " \
            f"\nCobertura: {recall:49} | F-score: {f_score:46}\nMatriz de confusión:\n{conf_mat}"
     print(resp)
 if __name__ == '__main__':
@@ -250,12 +251,12 @@ if __name__ == '__main__':
     Rogamos no hacer uso de este código por fuera del curso y de este semestre.
     ----------NO OPEN ACCESS!!!!!!!------------
     """
-    kernel = "linear" #{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’}
-    numero_cluster = 6 #corresponde con el número de clases
-    dictName = f'SVMk{kernel}_c{numero_cluster}_dict.mat'
-    nombre_modelo = f'SVMk{kernel}_c{numero_cluster}_modelo.npy'#"best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
-    nombre_entrenamiento = f'SVMk{kernel}_c{numero_cluster}_train.npy'
-    nombre_validacion = f'SVMk{kernel}_c{numero_cluster}_val.npy'
+    kernel = GeneralizedHistogramIntersection() #{‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’}
+    numero_cluster = 10 #corresponde con el número de clases
+    dictName = 'SVMklinear_c10_dict.mat' #f'SVMk{kernel}_c{numero_cluster}_dict.mat'
+    nombre_modelo = f'SVMkGenHist_c{numero_cluster}_modelo.npy'#f'SVMk{kernel}_c{numero_cluster}_modelo.npy'#"best_model_E1_201719942_201822262.npy"   #f'{funcion_str}{espacio}_b{numero_bins}_c{numero_cluster}_modelo.npy'
+    nombre_entrenamiento = f'SVMkGenHist_c{numero_cluster}_train.npy'
+    nombre_validacion = f'SVMkGenHist_c{numero_cluster}_val.npy'
     # TODO Establecer los valores de los parámetros con los que van a experimentar.
     # Nota: Tengan en cuenta que estos parámetros cambiarán según los descriptores
     # y clasificadores a utilizar.
