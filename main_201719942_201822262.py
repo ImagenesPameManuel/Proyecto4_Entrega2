@@ -200,8 +200,6 @@ def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
 
     filtros = loadmat('filterbank.mat')
     respBanco = calculateFilterResponse_201719942_201822262(img_gray, filtros)
-    print(respBanco)
-    print(centroids)
     copiaImagen = respBanco.copy()
     #   print(len(respBanco))
 
@@ -209,16 +207,20 @@ def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
         menorDist = 0
         centroTemp = None
         for k in range(len(centroids)):
-            print(respBanco[i], "respBanco")
-            print(centroids[k], "centroidaes")
             distandia_euc = distance.euclidean(respBanco[i], centroids[k]) #np.linalg.norm(respBanco[i]-centroids[k], ord=-1) #SALE ERROR ValueError: autodetected range of [nan, nan] is not finite
             if menorDist > distandia_euc:
                 menorDist = distandia_euc
                 centroTemp = k
-        print(i)
+            elif k == 0:
+                menorDist = distandia_euc
+                centroTemp = k
+        #print(i)
         copiaImagen[i] = centroTemp
     #copiaImagen.flatten()
-    hist = np.histogram(copiaImagen, bins=bins)
+    print("Salsa con tomate")
+    print(copiaImagen)
+    hist = np.histogram(copiaImagen.flatten(), bins=bins)
+    print("Chao")
     return hist[0]
 
 def main(parameters, perform_train, action):
