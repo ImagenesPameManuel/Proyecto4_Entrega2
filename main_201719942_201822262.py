@@ -5,6 +5,7 @@
 import os
 import glob
 import pickle
+from functools import partial
 from statistics import mode
 import numpy as np
 import sklearn.cluster as skclust
@@ -30,9 +31,11 @@ def calculate_descriptors(data, parameters, calculate_dict):
     dic = loadmat(parameters['dict_name'])
     centroides = dic['centroids']
     # descriptor_matrix = np.zeros(len(data), parameters['k'])
-    descriptor_matrix = list(map(CalculateTextonHistogram_201719942_201822262, dataGris, centroides))
-    print(descriptor_matrix.shape())
-    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (filtros['filterbank'].shape[2])*len(data)*len(data[0][0])*len(data[0][0][0]), 'El tamaño del descriptor no es el adecuado' # verificación
+    mapfunc = partial(CalculateTextonHistogram_201719942_201822262, centroids=centroides)
+    descriptor_matrix = list(map(mapfunc, dataGris))
+    #descriptor_matrix = list(map(CalculateTextonHistogram_201719942_201822262, dataGris, centroides))
+    print(len(descriptor_matrix), len(descriptor_matrix[0]))
+    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (len(data)*parameters['k']), 'El tamaño del descriptor no es el adecuado' # verificación
     return descriptor_matrix
 
 diccionario = {} # variable global para guardar cluster asignado para cada una de las clases trabajadas
@@ -57,7 +60,10 @@ def train(parameters, action):
     # TODO Definir una semilla y utilice la misma para todos los experimentos de la entrega.
     kernel = parameters['kernel']
     # TODO Inicializar y entrenar el modelo con los descriptores.
+    print("Antes del caos")
+    print(len(descriptors), len(descriptors[0]), len(nombres))
     entrenamiento_SVM = svm.SVC(kernel=kernel).fit(descriptors, nombres)
+    print("GANAMOS")
     #etiquetas = entrenamiento.labels_
     #plt.figure()  # se plotean las imágenes resultantes
     '''for i in range(len(etiquetas)):
@@ -118,8 +124,8 @@ def validate(parameters, action):
             anotaciones.append(1)#                                              anotaciones.append(mode(diccionario['street']))'''
     # TODO Obtener las métricas de evaluación
     conf_mat = sk.confusion_matrix(nombres, predicciones)
-    precision = sk.precision_score(nombres, predicciones, average="macro")
-    recall = sk.recall_score(nombres, predicciones, average="macro")
+    precision = sk.precision_score(nombres, predicciones, average="macro", zero_division=1)
+    recall = sk.recall_score(nombres, predicciones, average="macro", zero_division=1)
     f_score = sk.f1_score(nombres, predicciones, average="macro")                                                                                                                                #print((2*precision*recall)/(precision+recall))
     return conf_mat, precision, recall, f_score
 # TODO Copiar y pegar estas funciones en el script principal (main_Codigo1_Codigo2.py)
@@ -217,8 +223,9 @@ def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
         #print(i)
         copiaImagen[i] = centroTemp
     #copiaImagen.flatten()
-    print(copiaImagen.flatten().shape)
+    #print(copiaImagen.flatten().shape)
     hist = np.histogram(copiaImagen.flatten(), bins=bins)
+    #print(hist)
     return hist[0]
 
 def main(parameters, perform_train, action):
