@@ -31,8 +31,8 @@ def calculate_descriptors(data, parameters, calculate_dict):
     centroides = dic['centroids']
     # descriptor_matrix = np.zeros(len(data), parameters['k'])
     descriptor_matrix = list(map(CalculateTextonHistogram_201719942_201822262, dataGris, centroides))
-
-    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (parameters['k'])*len(data), 'El tamaño del descriptor no es el adecuado' # verificación
+    print(descriptor_matrix.shape())
+    assert len(descriptor_matrix)*len(descriptor_matrix[0]) == (filtros['filterbank'].shape[2])*len(data)*len(data[0][0])*len(data[0][0][0]), 'El tamaño del descriptor no es el adecuado' # verificación
     return descriptor_matrix
 
 diccionario = {} # variable global para guardar cluster asignado para cada una de las clases trabajadas
@@ -174,7 +174,7 @@ def calculateTextonDictionary_201719942_201822262(images_train, filters, paramet
     modelo_kmeans = KMeans(parameters['k'], random_state=semilla).fit(resp)
     # TODO Obtener las coordenadas de los centroides en una variable y almacenarlas
     #       en un diccionario, bajo la llave 'centroids'
-    print(modelo_kmeans.cluster_centers_.shape)
+    #print(modelo_kmeans.cluster_centers_.shape)
     dic = {'centroids': modelo_kmeans.cluster_centers_}
 
     # TODO Almacenar el diccionario anterior como un archivo .mat, bajo el nombre
@@ -217,10 +217,8 @@ def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
         #print(i)
         copiaImagen[i] = centroTemp
     #copiaImagen.flatten()
-    print("Salsa con tomate")
-    print(copiaImagen)
+    print(copiaImagen.flatten().shape)
     hist = np.histogram(copiaImagen.flatten(), bins=bins)
-    print("Chao")
     return hist[0]
 
 def main(parameters, perform_train, action):
