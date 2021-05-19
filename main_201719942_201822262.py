@@ -53,7 +53,7 @@ def train(parameters, action):
         y = 0
         # Esta condición solo la tendrán que utilizar para la tercera entrega.
         # TODO Cargar matrices de parameters['train_descriptor_name']
-        # descriptors = np.load(parameters['train_descriptor_name'])
+        #  np.load(parameters['train_descriptor_name'])
     # TODO Definir una semilla y utilice la misma para todos los experimentos de la entrega.
     kernel = parameters['kernel']
     # TODO Inicializar y entrenar el modelo con los descriptores.
@@ -128,11 +128,14 @@ def validate(parameters, action):
 def calculateFilterResponse_201719942_201822262(img_gray, filters):
     # TODO Inicializar arreglo de tamaño (MxN) x número de filtros, llamado 'resp'
     #print((len(img_gray)*len(img_gray[0])))
-    resp = np.zeros((len(img_gray)*len(img_gray[0]), len(filters['filterbank'])))
+    cant = filters['filterbank'].shape[2]
+    #print(cant)
+    resp = np.zeros((len(img_gray)*len(img_gray[0]), cant))
     # TODO Realizar un (1) ciclo que recorra los filtros
-    for i in tqdm(range(len(filters['filterbank']))):
+    for i in tqdm(range(filters['filterbank'].shape[2])):
         #print(filters['filterbank'])
-        correlacion = correlate2d(img_gray, filters['filterbank'][i], boundary="symm", mode='same')
+        correlacion = correlate2d(img_gray, filters['filterbank'][:, :, i], boundary="symm", mode='same')
+        #print(filters['filterbank'][:,:,i].shape)
         #print(len(correlacion) * len(correlacion[0]))
         correlacion = np.transpose(np.array([correlacion.flatten()]))
         #print(correlacion)
@@ -149,14 +152,15 @@ def calculateFilterResponse_201719942_201822262(img_gray, filters):
 
 
 def calculateTextonDictionary_201719942_201822262(images_train, filters, parameters):
-
+    cant = filters['filterbank'].shape[2]
     # TODO Inicializar arreglo de respuestas de tamaño [(MxN) x número de imágenes] x número de filtros
     M_N = len(images_train[0]) * len(images_train[0][0])
-    resp = np.zeros(((M_N) * len(images_train), len(filters['filterbank'])))
+    resp = np.zeros(((M_N) * len(images_train), cant))
     for i in range(len(images_train)):
         imgGris = color.rgb2gray(images_train[i])
         respBanco = calculateFilterResponse_201719942_201822262(imgGris, filters)
         resp[i*M_N:M_N * (i+1), :] = respBanco
+
     # TODO Realizar un (1) ciclo que recorra todas las imágenes de entrenamiento
     # TODO En cada iteración:
     #           - Calcular la respuesta de la imagen al banco de filtros (función anterior)
@@ -170,7 +174,9 @@ def calculateTextonDictionary_201719942_201822262(images_train, filters, paramet
     modelo_kmeans = KMeans(parameters['k'], random_state=semilla).fit(resp)
     # TODO Obtener las coordenadas de los centroides en una variable y almacenarlas
     #       en un diccionario, bajo la llave 'centroids'
+    print(modelo_kmeans.cluster_centers_.shape)
     dic = {'centroids': modelo_kmeans.cluster_centers_}
+
     # TODO Almacenar el diccionario anterior como un archivo .mat, bajo el nombre
     #       'dictname' (parámetro de entrada)
     savemat(parameters['dict_name'], dic) # PREGUNTAR POR DICTNAME VS DICT_NAME
@@ -194,17 +200,23 @@ def CalculateTextonHistogram_201719942_201822262(img_gray, centroids):
 
     filtros = loadmat('filterbank.mat')
     respBanco = calculateFilterResponse_201719942_201822262(img_gray, filtros)
+    print(respBanco)
+    print(centroids)
     copiaImagen = respBanco.copy()
     #   print(len(respBanco))
+
     for i in range(len(respBanco)):
         menorDist = 0
         centroTemp = None
         for k in range(len(centroids)):
-            distandia_euc=np.linalg.norm(respBanco[i]-centroids[k],ord=-1) #SALE ERROR ValueError: autodetected range of [nan, nan] is not finite
+            print(respBanco[i], "respBanco")
+            print(centroids[k], "centroidaes")
+            distandia_euc = distance.euclidean(respBanco[i], centroids[k]) #np.linalg.norm(respBanco[i]-centroids[k], ord=-1) #SALE ERROR ValueError: autodetected range of [nan, nan] is not finite
             if menorDist > distandia_euc:
                 menorDist = distandia_euc
                 centroTemp = k
-        copiaImagen[i]=centroTemp
+        print(i)
+        copiaImagen[i] = centroTemp
     #copiaImagen.flatten()
     hist = np.histogram(copiaImagen, bins=bins)
     return hist[0]
@@ -246,8 +258,8 @@ if __name__ == '__main__':
              'name_model': nombre_modelo, # No olviden establecer la extensión con la que guardarán sus archivos.
              'train_descriptor_name': nombre_entrenamiento, # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de entrenamiento.
              'val_descriptor_name': nombre_validacion} # No olviden asignar un nombre que haga referencia a sus experimentos y que corresponden a las imágenes de validación.
-    perform_train = False#True # Cambiar parámetro a False al momento de hacer la entrega
-    action = None#'save' # Cambiar a None al momento de hacer la entrega
+    perform_train = True#True # Cambiar parámetro a False al momento de hacer la entrega
+    action = 'save' # Cambiar a None al momento de hacer la entrega
     main(parameters=parameters, perform_train=perform_train, action=action)
 # 'bins': numero_bins,
 
